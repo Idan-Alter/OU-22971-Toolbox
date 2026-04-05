@@ -7,7 +7,7 @@ The goal of this unit is simple:
 - verify `torchrun`
 - run one tiny DDP smoke test
 
-**Note: if you're using a **linux machine**, you can skip this unit and create the `22971-td` environment locally. Run:
+**Note:** if you're using a **linux machine**, you can skip this unit and create the `22971-td` environment locally. Run:
 
 ```bash
 conda env create -f environment.yml
