@@ -1,0 +1,7 @@
+# Keep the Docker build context minimal: the image only needs the Ray unit's env
+# spec and the Dockerfile under 1_cluster_setup.
+*
+!environment.yml
+!1_cluster_setup/
+1_cluster_setup/*
+!1_cluster_setup/Dockerfile

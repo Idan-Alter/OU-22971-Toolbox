@@ -1,0 +1,42 @@
+services:
+  ray-head:
+    build:
+      context: ..
+      dockerfile: 1_cluster_setup/Dockerfile
+    container_name: ray-head
+    hostname: ray-head
+    working_dir: /workspace
+    volumes:
+      - ./head_workspace:/workspace
+    ports:
+      - "8265:8265"
+    shm_size: "3gb"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          bash -lc "source /opt/conda/etc/profile.d/conda.sh &&
+          conda activate 22971-ray &&
+          ray status --address=$(hostname -i):6379 >/dev/null 2>&1"
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    command: >
+      bash -lc "source /opt/conda/etc/profile.d/conda.sh &&
+      conda activate 22971-ray &&
+      ray start --head --node-ip-address=$(hostname -i) --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --resources='{\"head\": 1}' --block"
+
+  ray-worker:
+    build:
+      context: ..
+      dockerfile: 1_cluster_setup/Dockerfile
+    working_dir: /workspace
+    shm_size: "3gb"
+    depends_on:
+      ray-head:
+        condition: service_healthy
+    command: >
+      bash -lc "source /opt/conda/etc/profile.d/conda.sh &&
+      conda activate 22971-ray &&
+      ray start --node-ip-address=$(hostname -i) --address=ray-head:6379 --resources='{\"worker\": 1}' --block"

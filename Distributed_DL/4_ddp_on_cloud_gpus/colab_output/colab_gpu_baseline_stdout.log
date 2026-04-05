@@ -1,0 +1,32 @@
+config
+  world_size=1
+  model=resnet18
+  batch_size=64
+  num_workers=1
+  dataset_size=4096
+  steps=5
+  mode=gpu
+  backend=nccl
+  trace_name=colab_gpu_baseline
+  warmup_steps=3
+  profiled_steps=2
+gpu mapping
+  rank 0: local_rank=0 device=cuda:0 (Tesla T4)
+trace labels to look for
+  train_step
+  next_batch
+  forward
+  loss
+  backward
+  optimizer_step
+profiled step summary
+  rank 0: profiled_steps=2, profiled_images=128, avg_profiled_step_time=0.2070s, loss=7.3024
+throughput summary
+  profiled_window_images=128
+  profiled_window_seconds=0.4140
+  estimated_global_images_per_second=309.2 images/s
+  compare this number across the tuning ladder together with the GPU trace
+trace files
+  colab_gpu_baseline_rank0.json
+saved log
+  colab_gpu_baseline_stdout.log

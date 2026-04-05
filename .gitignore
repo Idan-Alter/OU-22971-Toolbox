@@ -1,0 +1,54 @@
+# MLflow tracking and run state
+**/mlflow_tracking/
+**/mlruns/
+**/mlartifacts/
+**/runs/
+
+# Data directories
+**/data*/
+**/*_data/
+
+
+# Keep the Ray lesson folder tracked while still ignoring generated data under it.
+!Ray/3_ray_data/
+Ray/3_ray_data/_tmp_ray_data_unit_*/
+Ray/3_ray_data/fake_data/
+
+# Distributed DL lesson-generated fake data
+Distributed_DL/2_training_challenges/fake_data/
+
+# Ray cluster scratch space
+Ray/.tmp-ray-host/
+Ray/1_cluster_setup/head_workspace/*
+!Ray/1_cluster_setup/head_workspace/.gitkeep
+
+# Generated artifacts
+**/artifacts/
+**/outputs/
+**/traces/
+**/artifact.json
+**/classification_report.txt
+**/confusion_matrix.png
+**/gridsearch_results.csv
+**/model.pkl
+**/stdout.log
+**/meta.txt
+**/mlflow.db
+**/*.log
+**/run_logs
+
+# Python / notebook cache
+**/__pycache__/
+**/*.py[cod]
+**/.ipynb_checkpoints/
+
+# Maintainer smoke-test logs
+test_logs/
+
+# Live unit material
+/Distributed_DL/5_parallelism_strategies/*
+!/Distributed_DL/5_parallelism_strategies/README.md
+
+# Preserve bundled teaching assets and reference outputs.
+!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/*
+!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/*
