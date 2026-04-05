@@ -7,11 +7,8 @@ The goal of this unit is simple:
 - verify `torchrun`
 - run one tiny DDP smoke test
 
-**Note:** if you're using a **linux machine**, you can skip this unit and create the `22971-td` environment locally. Run:
+**Note:** if you're using a **linux machine**, you can skip this unit and create the `22971-td` environment locally. 
 
-```bash
-conda env create -f environment.yml
-```
 ---
 
 ## Setup
@@ -34,7 +31,6 @@ code .
 ```
 
 **Important:** Make sure the top-level folder in the current VS Code window is `Distributed_DL`.
-The checked-in Part 3 config now lives in `.devcontainer/` at the root of this folder, so VS Code picks it up directly without any subfolder workaround.
 If you open the repo root instead, the Dev Containers extension may use a different config and build the wrong image.
 
 ### 2. Reopen the folder in the container
@@ -45,7 +41,7 @@ If you open the repo root instead, the Dev Containers extension may use a differ
 On the first run, VS Code will build the image and then reopen the current folder inside the container.
 
 Because you opened `Distributed_DL`, the dev container mounts that full folder into the container as `/workspace`.
-That means the rest of Part 3 is available immediately after the container opens, with no extra path remapping trick.
+That means the rest of Part 3 is available immediately after the container opens.
 
 ### 3. Verify the environment
 
@@ -130,7 +126,7 @@ It tells VS Code how to build the image, what folder to mount, which folder to o
 }
 ```
 
-The config file now lives under `.devcontainer/` at the root of `Distributed_DL`, so `context: ".."` points Docker at the full Part 3 folder.
+`context: ".."` points Docker at the current folder.
 That lets the Dockerfile see the part-level `environment.yml`.
 
 #### `workspaceMount`
@@ -139,14 +135,9 @@ That lets the Dockerfile see the part-level `environment.yml`.
 "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
 ```
 
-You open the `Distributed_DL` folder in VS Code, and we bind-mount that same folder into the container.
+You open the `Distributed_DL` folder in VS Code, and docker bind-mounts that same folder into the container.
 
-That means:
-
-- local `Distributed_DL`
-- container `/workspace`
-
-This keeps the whole part editable and runnable inside the container without opening one folder and mounting another.
+This keeps the whole part editable and runnable inside the container.
 
 #### `workspaceFolder`
 
