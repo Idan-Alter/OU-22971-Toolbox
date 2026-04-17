@@ -318,7 +318,7 @@ If one rank does something different, the others can block forever.
 
 ---
 
-## Optional exercises
+## Exercises
 
 1. Explore point-to-point antipatterns and failure modes.
    Start from `2_send_recv_demo.py`, then try variants such as rank `0` doing `send` while rank `1` does `irecv`.
