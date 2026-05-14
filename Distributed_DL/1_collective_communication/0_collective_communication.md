@@ -28,16 +28,28 @@ Complete [Dev Container Setup](../0_devcontainer_setup/0_devcontainer_setup.md) 
 
 ## Why `torch.distributed`?
 
-Ray is excellent for orchestration and general distributed Python workloads, but deep learning training has a narrower requirement: workers must exchange tensors quickly and predictably.
+Ray is excellent for orchestration and general distributed Python workloads, but it has a pain point: data moves only through the object store.
+
+![Ray pain point: object store hop](object_store.png)
+
+This is unsuitable for DL training because nodes must exchange tensors quickly.
 
 `torch.distributed` exists for that job:
 
-- it is built around training-oriented communication patterns
-- it makes data movement and synchronization explicit
-- it is the communication layer underneath tools like DDP
+- it is built around training-oriented, fast low-level communication patterns with *distributed tensors*
+- data movement and process synchronization become explicit
+   - good for runtime optimization
+   - bad for code simplicity
+
+![torch.distributed: low-level communication](process_groups.png)
 
 In this unit we use the CPU-friendly `gloo` backend.
 Later GPU sections reuse the same mental model with faster GPU-oriented communication backends.
+
+**Divison of labor:**
+
+![torch.distributed says “mutate tensor X on every rank”; Gloo does the actual message-passing/reduction that makes each local X become X′.](td_vs_gloo.png)
+
 
 ---
 
@@ -104,9 +116,7 @@ What to notice:
 - `torchrun` launched four workers
 - each worker ran the same code with different process-local state
 - `LOCAL_RANK` and `rank` are related, but they are not always the same in multi-node jobs
-
-Training loop connection:
-One training script becomes one copy per rank; the code is shared, but each rank has its own local state and data.
+- the code is shared, but each rank has its own local state and data
 
 ---
 
@@ -131,8 +141,6 @@ What to notice:
 - both sides block by default until the transfer is complete
 - if ranks disagree on the order or count of sends and receives, they can hang
 
-Training loop connection:
-Point-to-point communication exists, but ordinary training loops lean on collectives.
 
 ---
 
@@ -157,6 +165,9 @@ What to notice:
 See the diagrams in the [PyTorch tutorial](https://docs.pytorch.org/tutorials/intermediate/dist_tuto.html#collective-communication).
 
 ---
+## Standard distributed training loop (data parallelism)
+
+![Three-rank distributed training loop showing local forward/loss/backward/optimizer steps, with scatter, all_reduce, gather, rank-0 checkpoint save, and final barrier() sync.](<td training loop.png>)
 
 ## Broadcast
 
