@@ -165,9 +165,9 @@ What to notice:
 See the diagrams in the [PyTorch tutorial](https://docs.pytorch.org/tutorials/intermediate/dist_tuto.html#collective-communication).
 
 ---
-## Standard distributed training loop (data parallelism)
+## Basic distributed training loop (data parallelism)
 
-![Three-rank distributed training loop showing local forward/loss/backward/optimizer steps, with scatter, all_reduce, gather, rank-0 checkpoint save, and final barrier() sync.](<td training loop.png>)
+![Three-rank distributed training loop showing local forward/loss/backward/optimizer steps, with scatter, all_reduce, gather, rank-0 checkpoint save, and final barrier() sync.](td_ddp_loop.png)
 
 ## Broadcast
 
