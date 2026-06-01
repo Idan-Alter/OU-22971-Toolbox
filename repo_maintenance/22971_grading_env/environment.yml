@@ -1,0 +1,34 @@
+name: 22971-grading
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - libblas=*=*openblas
+  - numpy=2.4.*
+  - pandas=2.3.*
+  - scikit-learn=1.8.*
+  # NannyML 0.13 resolves against XGBoost 2.x, so pin the conda side to
+  # the same family instead of installing 3.x and letting pip downgrade it.
+  - xgboost=2.1.*
+  - matplotlib=3.10.*
+  - seaborn=0.13.*
+  - pyarrow=23.0.*
+  - scipy
+  - sqlalchemy
+  - ipykernel
+  - jupyterlab
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cpu
+      - torch==2.9.1
+      - torchvision==0.24.1
+      - mlflow==3.12.*
+      - metaflow==2.19.*
+      - nannyml==0.13.*
+      - optuna==4.6.*
+      - "ray[default,data,train,tune]==2.54.*"
+      - fastapi
+      - uvicorn
+      - requests
+      - pytest

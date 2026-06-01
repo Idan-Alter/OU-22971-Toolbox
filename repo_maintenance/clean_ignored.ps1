@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-Deletes ignored artifact, data, and tracking paths from this repository while preserving TLC_data, runpod_output, colab_output, and test_logs.
+Deletes ignored artifact, data, and tracking paths from this repository while preserving TLC_data, runpod_output, colab_output, test_logs, and exam_prep.
 
 .DESCRIPTION
 Uses Git to enumerate ignored paths, removes them from the working tree, and refuses to
 delete anything outside the repository root. Any path containing TLC_data, runpod_output,
-colab_output, or test_logs is skipped on purpose.
+colab_output, test_logs, or exam_prep is skipped on purpose.
 
 .EXAMPLE
 powershell -NoProfile -ExecutionPolicy Bypass -File .\repo_maintenance\clean_ignored.ps1 -WhatIf
@@ -13,7 +13,7 @@ Preview which ignored paths would be deleted without removing anything.
 
 .EXAMPLE
 powershell -NoProfile -ExecutionPolicy Bypass -File .\repo_maintenance\clean_ignored.ps1
-Delete ignored paths in the repository while preserving TLC_data, runpod_output, colab_output, and test_logs.
+Delete ignored paths in the repository while preserving TLC_data, runpod_output, colab_output, test_logs, and exam_prep.
 
 .NOTES
 You can also run: Get-Help .\repo_maintenance\clean_ignored.ps1 -Full
@@ -67,7 +67,7 @@ if ($ignoredPaths.Count -eq 0) {
     return
 }
 
-$skipPattern = '(^|[\\/])(TLC_data|runpod_output|colab_output|test_logs)([\\/]|$)'
+$skipPattern = '(^|[\\/])(TLC_data|runpod_output|colab_output|test_logs|exam_prep)([\\/]|$)'
 $uniquePaths = $ignoredPaths | Select-Object -Unique
 $sortedPaths = $uniquePaths | Sort-Object { ($_ -split '[\\/]').Count } -Descending
 
@@ -108,4 +108,4 @@ foreach ($relativePath in $sortedPaths) {
     }
 }
 
-Write-Host "Done. Deleted $deletedCount ignored paths; skipped $skippedCount preserved TLC_data/runpod_output/colab_output/test_logs paths."
+Write-Host "Done. Deleted $deletedCount ignored paths; skipped $skippedCount preserved TLC_data/runpod_output/colab_output/test_logs/exam_prep paths."

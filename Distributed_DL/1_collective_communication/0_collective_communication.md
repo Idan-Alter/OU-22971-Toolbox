@@ -30,7 +30,7 @@ Complete [Dev Container Setup](../0_devcontainer_setup/0_devcontainer_setup.md) 
 
 Ray is excellent for orchestration and general distributed Python workloads, but it has a pain point: data moves only through the object store.
 
-![Ray pain point: object store hop](object_store.png)
+![Ray pain point: object store hop](images/object_store.png)
 
 This is unsuitable for DL training because nodes must exchange tensors quickly.
 
@@ -41,14 +41,14 @@ This is unsuitable for DL training because nodes must exchange tensors quickly.
    - good for runtime optimization
    - bad for code simplicity
 
-![torch.distributed: low-level communication](process_groups.png)
+![torch.distributed: low-level communication](images/process_groups.png)
 
 In this unit we use the CPU-friendly `gloo` backend.
 Later GPU sections reuse the same mental model with faster GPU-oriented communication backends.
 
 **Divison of labor:**
 
-![torch.distributed says “mutate tensor X on every rank”; Gloo does the actual message-passing/reduction that makes each local X become X′.](td_vs_gloo.png)
+![torch.distributed says “mutate tensor X on every rank”; Gloo does the actual message-passing/reduction that makes each local X become X′.](images/td_vs_gloo.png)
 
 
 ---
@@ -167,9 +167,9 @@ See the diagrams in the [PyTorch tutorial](https://docs.pytorch.org/tutorials/in
 ---
 ## Basic distributed training loop (data parallelism)
 
-![Three-rank distributed training loop showing local forward/loss/backward/optimizer steps, with scatter, all_reduce, gather, rank-0 checkpoint save, and final barrier() sync.](td_ddp_loop.png)
+![Three-rank distributed training loop showing local forward/loss/backward/optimizer steps, with scatter, all_reduce, gather, rank-0 checkpoint save, and final barrier() sync.](images/td_ddp_loop.png)
 
-## Broadcast
+## `broadcast`
 
 Run:
 
@@ -194,7 +194,7 @@ Use broadcast for sharing state from one rank to the rest of the job.
 
 ---
 
-## Reduce vs `all_reduce`
+## `reduce` vs `all_reduce`
 
 Run:
 
@@ -218,7 +218,7 @@ Use `reduce` when only rank `0` needs a final scalar; use `all_reduce` for synch
 
 ---
 
-## Gather vs `all_gather`
+## `gather` vs `all_gather`
 
 Run:
 
@@ -242,7 +242,7 @@ Use `gather` for rank-0-only reporting and `all_gather` when every worker needs 
 
 ---
 
-## Scatter
+## `scatter`
 
 Run:
 
@@ -268,7 +268,7 @@ Scatter is a simple model for handing out one per-rank shard of work from a cent
 
 ---
 
-## Barrier
+## `barrier`
 
 Run:
 

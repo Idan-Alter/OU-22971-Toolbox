@@ -128,8 +128,24 @@ function Get-HarnessPythonCommand {
         return $script:HarnessPythonCommand
     }
 
+    try {
+        $conda = Get-CondaExecutable
+        $condaRoot = Split-Path -Parent (Split-Path -Parent $conda)
+        $condaPython = Join-Path $condaRoot 'python.exe'
+        if (Test-Path -LiteralPath $condaPython) {
+            $script:HarnessPythonCommand = [pscustomobject]@{
+                file_path = $condaPython
+                arguments = @()
+            }
+            return $script:HarnessPythonCommand
+        }
+    }
+    catch {
+        # Fall through to PATH-based discovery; later setup checks report missing Conda.
+    }
+
     $python = Get-Command python.exe -ErrorAction SilentlyContinue
-    if ($null -ne $python) {
+    if ($null -ne $python -and $python.Source -notmatch '\\Microsoft\\WindowsApps\\python\.exe$') {
         $script:HarnessPythonCommand = [pscustomobject]@{
             file_path = $python.Source
             arguments = @()
@@ -1005,9 +1021,14 @@ function Get-NotebookReplacementPairs {
             $null = $pairs.Add('/content/Distributed_DL=>' + $sandboxPath)
             $null = $pairs.Add('from urllib.request import urlretrieve=>import shutil')
             $null = $pairs.Add(
-                'urlretrieve(f"{BASE_RAW_URL}/profile_ddp_gpu.py", PART4_ROOT / "profile_ddp_gpu.py")=>shutil.copy2(r"' +
+                'urlretrieve(f"{BASE_RAW_URL}/profile_ddp_gpu.py", PART4_ROOT / "profile_ddp_gpu.py")=>src = Path(r"' +
                 "$localUnit4/profile_ddp_gpu.py" +
-                '", PART4_ROOT / "profile_ddp_gpu.py")'
+                '"); dst = PART4_ROOT / "profile_ddp_gpu.py"; shutil.copy2(src, dst) if src.resolve() != dst.resolve() else None'
+            )
+            $null = $pairs.Add(
+                'urlretrieve("https://raw.githubusercontent.com/Idan-Alter/OU-22971-Toolbox/main/Distributed_DL/4_ddp_on_cloud_gpus/profile_ddp_gpu.py", "profile_ddp_gpu.py")=>src = Path(r"' +
+                "$localUnit4/profile_ddp_gpu.py" +
+                '"); dst = Path("profile_ddp_gpu.py"); shutil.copy2(src, dst) if src.resolve() != dst.resolve() else None'
             )
             break
         }

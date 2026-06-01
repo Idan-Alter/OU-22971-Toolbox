@@ -36,6 +36,7 @@ Ray/1_cluster_setup/head_workspace/*
 **/mlflow.db
 **/*.log
 **/run_logs
+exam_prep/
 
 # Python / notebook cache
 **/__pycache__/
