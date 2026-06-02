@@ -28,12 +28,6 @@ docker build -t 22971-grading:latest .\repo_maintenance\22971_grading_env
 Run the bundled smoke test:
 
 ```powershell
-docker run --rm 22971-grading:latest python /workspace/repo_maintenance/22971_grading_env/verify_env.py
-```
-
-When running the command above exactly, mount the repo first:
-
-```powershell
 docker run --rm -v "${PWD}:/workspace" -w /workspace 22971-grading:latest python repo_maintenance/22971_grading_env/verify_env.py
 ```
 

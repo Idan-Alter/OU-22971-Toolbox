@@ -154,7 +154,7 @@ In the profiler trace that means:
 4. Open the output log
 
    ```bash
-   /runpod_output/rank0_stdout.log
+   4_ddp_on_cloud_gpus/runpod_output/runpod_gpu_baseline_stdout.log
    ```
 5. Observe:
    - `gpu mapping`: each rank is pinned to a different GPU.

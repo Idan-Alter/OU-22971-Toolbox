@@ -50,4 +50,4 @@ The emphasis is practical engineering ability, with supporting theoretical under
 
 ## Maintenance
 
-Repo-wide maintenance scripts and helper runners live under [repo_maintenance/](repo_maintenance/README.md).
+Repo-wide maintenance tooling lives under [repo_maintenance/](repo_maintenance/README.md), including smoke-test validation, ignored-artifact cleanup, reproducible notebook HTML rendering, helper runners, and the grading Docker environment.

@@ -9,9 +9,9 @@ This folder contains Part 1 of Course 22971: a hands-on MLOps sequence built aro
 - Unit 2: [Experiment Logging and Artifact Persistence](2_logging_persistence/0_logging_persistence.md)
 - Unit 3: [MLflow Setup](3_mlflow_setup/0_mlflow_setup.md)
 - Unit 4: [Logging](4_mlflow_logging/0_mlflow_logging.md)
-- Unit 5: [Hyperparameter Tuning with Optuna](5_xgboost_tuning/2_optuna_hyperparameter_tuning.md)
-- Unit 6: [Model Evaluation, Monitoring, and Temporal Data Drift (Case Study)](6_monitoring_data_drift/1_monitoring_data_drift.md)
-- Unit 7: [Model Registry, Promotion, and Deployment](7_model_registry_deployment/0_model_registry_deployment.md)
+- Unit 5: [XGBoost Crash Course](5_xgboost_tuning/0_xgboost_crash_course.ipynb), [Breast Cancer EDA](5_xgboost_tuning/1_breast_cancer_eda.ipynb), and [Hyperparameter Tuning with Optuna](5_xgboost_tuning/2_optuna_hyperparameter_tuning.md)
+- Unit 6: [Green Taxi EDA](6_monitoring_data_drift/0_green_taxi_eda.ipynb) and [Model Evaluation, Monitoring, and Temporal Data Drift (Case Study)](6_monitoring_data_drift/1_monitoring_data_drift.md)
+- Unit 7: [Model Registry, Promotion, and Deployment](7_model_registry_deployment/0_model_registry_deployment.md) and [Demo Flow](7_model_registry_deployment/1_demo_flow.md)
 - Unit 8: [Capstone Project Design Doc](8_mlops_capstone_project/design_doc.md)
 
 ## Taxi case study

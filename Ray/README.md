@@ -4,7 +4,7 @@ This folder contains Part 2 of Course 22971: a hands-on Ray sequence covering co
 
 ## Start here
 
-- Unit 0: [Core Primitives](0_core_primitives)
+- Unit 0: Core Primitives: [Async Intro](0_core_primitives/0_ray_async_intro.ipynb), [Objects](0_core_primitives/1_objects.ipynb), and [Actors](0_core_primitives/2_actors.ipynb)
 - Unit 1: [Docker Cluster Setup](1_cluster_setup/0_docker_cluster_setup.md)
 - Unit 2: [Distributed Systems Design Through Classical Examples](2_system_design/README.md)
 - Unit 3: [Sharded Data](3_ray_data/ray_data.ipynb)
