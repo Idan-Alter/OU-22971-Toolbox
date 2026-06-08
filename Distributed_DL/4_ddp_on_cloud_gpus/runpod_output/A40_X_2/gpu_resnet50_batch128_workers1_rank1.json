@@ -176470,7 +176470,7 @@
     "pid": "", "tid": "", "ts": 5492562380410.986
   }
   ],
-  "traceName": "/workspace/run_traces/ddp_gpu_resnet50/gpu_resnet50_rank1.json",
+  "traceName": "/workspace/run_traces/ddp_gpu_resnet50_batch128_workers1_batch128_workers1/gpu_resnet50_batch128_workers1_rank1.json",
   "displayTimeUnit": "ms",
   "baseTimeNanoseconds": 1775078550000000000
 }

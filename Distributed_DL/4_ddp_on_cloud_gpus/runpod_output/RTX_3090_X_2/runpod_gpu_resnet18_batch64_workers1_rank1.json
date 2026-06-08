@@ -68772,7 +68772,7 @@
     "pid": "", "tid": "", "ts": 263451334853.249
   }
   ],
-  "traceName": "runpod_gpu_baseline_rank1.json",
+  "traceName": "runpod_gpu_resnet18_batch64_workers1_rank1.json",
   "displayTimeUnit": "ms",
   "baseTimeNanoseconds": 1775078550000000000
 }

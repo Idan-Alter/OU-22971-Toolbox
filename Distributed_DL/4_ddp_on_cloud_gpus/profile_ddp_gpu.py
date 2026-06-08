@@ -37,13 +37,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset-size", type=int, default=4096)
     parser.add_argument("--steps", type=int, default=5)
     parser.add_argument("--trace-dir", type=str, default="4_ddp_on_cloud_gpus/traces")
-    parser.add_argument("--trace-name", type=str, default="gpu_baseline")
+    parser.add_argument("--trace-name", type=str)
     parser.add_argument(
         "--cpu",
         action="store_true",
         help="Run the profiler script with gloo on CPU for local validation.",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.trace_name is None:
+        args.trace_name = (
+            f"gpu_{args.model}_batch{args.batch_size}_workers{args.num_workers}"
+        )
+    return args
 
 
 # region Reporting Helpers

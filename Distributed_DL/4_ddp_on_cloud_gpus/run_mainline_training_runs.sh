@@ -46,8 +46,8 @@ run_torchrun() {
 # Run this script from the directory that contains profile_ddp_gpu.py.
 # By default the DDP commands expect the documented 2-GPU setup. If you want to
 # use the script's CPU smoke-test mode instead, export UNIT4_EXTRA_ARGS="--cpu".
-run_torchrun ddp_gpu_baseline 2 gpu_baseline
-run_torchrun ddp_gpu_workers4 2 gpu_workers4 --num-workers 4
-run_torchrun ddp_gpu_batch256 2 gpu_batch256_workers4 --batch-size 256 --num-workers 4
-run_torchrun ddp_gpu_resnet50 2 gpu_resnet50_batch128_workers4 --model resnet50 --batch-size 128 --num-workers 4
-run_torchrun ddp_gpu_resnet50 2 gpu_resnet50_batch256_workers4 --model resnet50 --batch-size 256 --num-workers 4
+run_torchrun ddp_gpu_resnet18_batch64_workers1 2 gpu_resnet18_batch64_workers1
+run_torchrun ddp_gpu_resnet18_batch64_workers4 2 gpu_resnet18_batch64_workers4 --num-workers 4
+run_torchrun ddp_gpu_resnet18_batch256_workers4 2 gpu_resnet18_batch256_workers4 --batch-size 256 --num-workers 4
+run_torchrun ddp_gpu_resnet50_batch128_workers4 2 gpu_resnet50_batch128_workers4 --model resnet50 --batch-size 128 --num-workers 4
+run_torchrun ddp_gpu_resnet50_batch256_workers4 2 gpu_resnet50_batch256_workers4 --model resnet50 --batch-size 256 --num-workers 4

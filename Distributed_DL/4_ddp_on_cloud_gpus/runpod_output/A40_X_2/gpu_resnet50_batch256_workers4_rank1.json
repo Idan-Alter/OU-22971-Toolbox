@@ -164414,7 +164414,7 @@
     "pid": "", "tid": "", "ts": 5492790484755.869
   }
   ],
-  "traceName": "/workspace/run_traces/ddp_gpu_resnet50/gpu_resnet50_batch256_workers4_rank1.json",
+  "traceName": "/workspace/run_traces/ddp_gpu_resnet50_batch256_workers4/gpu_resnet50_batch256_workers4_rank1.json",
   "displayTimeUnit": "ms",
   "baseTimeNanoseconds": 1775078550000000000
 }

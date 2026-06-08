@@ -39,7 +39,7 @@ The main output of the profiler is a trace file. We'll go over one now.
    torchrun --standalone --nproc_per_node=2 3_profiler_cpu_traces/profile_manual_data_parallel.py --trace-name baseline
    ```
 
-   This file uses the same image-shaped training logic as the model in the previous unit, but logs the run with the profiler.
+   This file uses the same training logic as the in the previous unit, but logs the run with the profiler.
 
 2. Open `/traces/baseline_rank0.json` at [https://ui.perfetto.dev/](https://ui.perfetto.dev/).
 

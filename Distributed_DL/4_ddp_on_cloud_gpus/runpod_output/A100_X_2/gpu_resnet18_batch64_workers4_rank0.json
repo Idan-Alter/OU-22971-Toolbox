@@ -71313,7 +71313,7 @@
     "pid": "", "tid": "", "ts": 5491460136323.140
   }
   ],
-  "traceName": "/workspace/run_traces/ddp_gpu_workers4/gpu_workers4_rank0.json",
+  "traceName": "/workspace/run_traces/ddp_gpu_resnet18_batch64_workers4/gpu_resnet18_batch64_workers4_rank0.json",
   "displayTimeUnit": "ms",
   "baseTimeNanoseconds": 1775078550000000000
 }

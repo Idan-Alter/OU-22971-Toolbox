@@ -7855,7 +7855,7 @@ a.anchor-link {
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"has_gpu=</span><span class="si">{</span><span class="n">has_gpu</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">has_gpu</span><span class="p">:</span>
     
-    <span class="n">trace_name1</span> <span class="o">=</span> <span class="s2">"colab_gpu_initial"</span>
+    <span class="n">trace_name1</span> <span class="o">=</span> <span class="s2">"colab_gpu_resnet18_batch64_workers0"</span>
     <span class="n">trace_dir</span>   <span class="o">=</span> <span class="s2">"."</span>
     <span class="n">launch_cmd1</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"torchrun --standalone --nproc_per_node=1 "</span>
@@ -7865,7 +7865,7 @@ a.anchor-link {
         <span class="s2">"--num-workers 0 "</span>
     <span class="p">)</span>
     
-    <span class="n">trace_name2</span> <span class="o">=</span> <span class="s2">"colab_gpu_baseline"</span>
+    <span class="n">trace_name2</span> <span class="o">=</span> <span class="s2">"colab_gpu_resnet18_batch64_workers1"</span>
     <span class="n">launch_cmd2</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"torchrun --standalone --nproc_per_node=1 "</span>
         <span class="s2">"profile_ddp_gpu.py "</span>

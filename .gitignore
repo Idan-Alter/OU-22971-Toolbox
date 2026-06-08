@@ -50,6 +50,10 @@ test_logs/
 /Distributed_DL/5_parallelism_strategies/*
 !/Distributed_DL/5_parallelism_strategies/README.md
 
-# Preserve bundled teaching assets and reference outputs.
-!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/*
-!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/*
+# Preserve cloud GPU output logs while ignoring logs everywhere else.
+!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/
+!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/**/
+!Distributed_DL/4_ddp_on_cloud_gpus/runpod_output/**/*.log
+!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/
+!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/**/
+!Distributed_DL/4_ddp_on_cloud_gpus/colab_output/**/*.log
