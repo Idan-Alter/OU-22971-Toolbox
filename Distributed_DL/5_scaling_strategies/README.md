@@ -1,4 +1,4 @@
-# Distributed DL Unit 5 - Parallelism Strategies Beyond DDP
+# Distributed DL Unit 5 - Scaling Strategies Beyond DDP
 
 Unit 5 is a lecture-based review lesson, so this folder is empty by design.
 
@@ -6,5 +6,7 @@ Unit 5 is a lecture-based review lesson, so this folder is empty by design.
 
 - Hugging Face Ultra-Scale Playbook:
   <https://huggingface.co/spaces/nanotron/ultrascale-playbook>
+- How to Scale Your Model:
+  <https://jax-ml.github.io/scaling-book/>
 - Picotron repo:
   <https://github.com/huggingface/picotron>

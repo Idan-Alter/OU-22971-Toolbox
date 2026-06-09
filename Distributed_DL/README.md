@@ -9,7 +9,7 @@ This folder contains Part 3 of Course 22971: a sequence on how distributed train
 - Unit 2: [Parallel Training Challenges](2_training_challenges/0_training_challenges.md)
 - Unit 3: [PyTorch Profiler: Probe the Toy Script with Traces](3_profiler_cpu_traces/0_profiler_cpu_traces.md)
 - Unit 4: [DDP on a Cloud GPU Instance](4_ddp_on_cloud_gpus/0_ddp_on_cloud_gpus.md)
-- Unit 5: [Parallelism Strategies Beyond DDP](5_parallelism_strategies/README.md)
+- Unit 5: [Scaling Strategies Beyond DDP](5_scaling_strategies/README.md)
 - Unit 6: [Capstone Project Design Doc](6_torch_dist_capstone_project/design_doc.md)
 
 ## Setup

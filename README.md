@@ -38,7 +38,7 @@ The emphasis is practical engineering ability, with supporting theoretical under
 - parallel training challenges: compute, memory, communication
 - performance analysis with PyTorch Profiler and Perfetto or Chrome trace viewing
 - distributed GPU training on managed cloud images
-- five parallelism dimensions: data, tensor, pipeline, context, expert
+- scaling strategies beyond DDP: data, tensor, pipeline, context, and expert parallelism
 
 
 ## Extra resources
