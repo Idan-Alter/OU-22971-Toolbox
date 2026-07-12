@@ -1,5 +1,5 @@
 # Distributed DL Unit 6 - Capstone Project Design Doc
-## SimCLR-like distributed training with manual ResNet sharding
+## SimCLR-like distributed training with manual two-stage pipeline parallelism
 
 This document specifies the Distributed DL capstone project.
 
@@ -7,13 +7,13 @@ This document specifies the Distributed DL capstone project.
 
 ## Goal
 
-Build a distributed training system that learns from paired image augmentations in a SimCLR-like way, manually shards a small ResNet across devices, and studies its behavior through manual batch-size sweeps and manual trace analysis.
+Build a distributed training system that learns from paired image augmentations in a SimCLR-like way, manually partitions a small ResNet into pipeline stages across devices, and studies its behavior through manual batch-size sweeps and manual trace analysis.
 
 The capstone should prove that you can:
 
 - implement a distributed contrastive training loop
-- manually partition a CNN into sequential stages on different ranks
-- reason about compute, memory, communication, waiting, and stage imbalance
+- manually partition a CNN into sequential pipeline stages on different ranks
+- reason about compute, memory, communication, waiting, pipeline bubbles, and stage imbalance
 - capture and inspect per-rank traces
 - use trace evidence to justify manual tuning decisions
 - rerun the job with a new configuration and explain why it improved or failed to improve
@@ -70,11 +70,11 @@ Calculating this loss in a distributed system introduces complications:
 
 Implement this sequence:
 
-**prepare deterministic dataset metadata -> launch with `torchrun` -> train a distributed contrastive learning model with a sharded encoder -> capture traces -> manually analyze -> manually choose the next `batch_size` for optimal throughput -> rerun -> compare**
+**prepare deterministic dataset metadata -> launch with `torchrun` -> train a distributed contrastive learning model with a pipeline-partitioned encoder -> capture traces -> manually analyze -> manually choose the next `batch_size` for optimal throughput -> rerun -> compare**
 
-The main runtime is a manually sharded, two-stage training system, not a standard data-parallel loop.
+The main runtime is a manually implemented, two-stage pipeline-parallel training system replicated across rank pairs, not a standard data-parallel loop.
 
-Sharding the model into stages will be done sequentially such that the first few layers will form stage 0, and the rest will form stage 1. For example:
+Partition the model sequentially so the first few layers form pipeline stage 0 and the rest form pipeline stage 1. The cut between them is the **stage boundary**. For example:
 
 - **stage 0**: `conv1`, `bn1`, `relu`, `maxpool`, `layer1`, `layer2`
 - **stage 1**: `layer3`, `layer4`, `avgpool`, flatten, projection head
@@ -91,11 +91,11 @@ Initialize `torch.distributed` on the default `world_group` with an even number 
 
 Required communication structure:
 
-- define a logical `pair_group(k) = (2k, 2k+1)`, where each pair forms one sharded model replica
-- define `stage0_group` as all even ranks; these ranks own stage 0 and perform stage-0 gradient synchronization
-- define `stage1_group` as all odd ranks; these ranks own stage 1, compute the contrastive loss and perform stage-1 gradient synchronization
-- point-to-point communication belongs inside each `pair_group` for passing forward activations and returned gradients
-- collectives belong inside the stage groups for `all_gather` of the image embeddings and gradient averaging
+- define a logical `pair_group(k) = (2k, 2k+1)`, where each pair forms one pipeline-parallel model replica with a pipeline-parallel degree of `2`
+- define `stage0_group` as all even ranks; these ranks own pipeline stage 0 and form the data-parallel group for stage-0 gradient synchronization
+- define `stage1_group` as all odd ranks; these ranks own pipeline stage 1, compute the contrastive loss, and form the data-parallel group for stage-1 gradient synchronization
+- point-to-point communication belongs inside each `pair_group` for passing boundary activations forward and boundary gradients backward between adjacent pipeline stages
+- collectives belong inside the stage groups for `all_gather` of the image embeddings and gradient averaging across corresponding stage replicas
 
 Required model setup:
 
@@ -128,7 +128,7 @@ Use fixed microbatch shapes and `drop_last=True` at first so send and receive bu
 On each even rank:
 
 - run stage 0
-- explicitly transfer the stage output activation tensor to the paired odd rank inside the relevant `pair_group`
+- explicitly transfer the stage output to the paired odd rank inside the relevant `pair_group`
 
 ### Step C - run stage 1 and gather embeddings
 
@@ -159,7 +159,7 @@ On each odd rank:
 
 - run `loss.backward()`
 - extract the gradient of the boundary activation tensor received from the paired even rank
-- explicitly send that boundary gradient back to the even rank
+- explicitly send that **boundary gradient** backward across the stage boundary to the even rank
 
 On each even rank:
 
@@ -212,7 +212,7 @@ After implementing the distributed training script:
 - run a short manual sweep over a wide range of `local_batch_size` values
 - save rank traces and metric summaries for each run
 - treat global `images/s` as the primary systems metric for choosing the batch size
-- use the traces to explain why `images/s` improved or degraded across runs
+- use the traces to explain why `images/s` improved or degraded across runs, including changes in the pipeline bubble
 - choose the batch size that maximizes `images/s`
 
 **Note 1**: In real SimCLR, very large global batches often matter for representation quality so throughput is not the whole story. This project intentionally evaluates distributed-systems behavior, not embedding quality.
@@ -228,9 +228,9 @@ Take this into account in your analysis:
 
 - inspect the odd-rank traces specifically for `gather_embeddings` and `loss_calculation`, since that is where the contrastive-loss overhead appears
 - compare the run length of `stage0_forward` against `stage1_forward + loss_calculation`
-- estimate communication percentage and waiting percentage
+- estimate communication percentage and waiting percentage, including the pipeline-bubble percentage
 - show when a larger batch stops improving `images/s`
-- explain whether a larger batch improved the local-work-to-synchronization ratio or merely increased waiting, communication percentage, or memory pressure
+- explain whether a larger batch improved the local-work-to-synchronization ratio or merely increased waiting, the pipeline bubble, communication percentage, or memory pressure
 
 ---
 
@@ -238,7 +238,7 @@ Take this into account in your analysis:
 
 During development, add simple validation checks:
 
-- verify that every participating rank enters sends, receives, and collectives in the same order so the job does not deadlock
+- verify that every participating rank follows the agreed pipeline schedule and enters sends, receives, and collectives in the expected order so the job does not deadlock
 - assert that boundary activation tensors and returned boundary gradients have the expected fixed shapes on both sides of the pair
 - assert that loss values, embeddings, and gradients remain finite before the optimizer step
 - after stage-local gradient synchronization and the optimizer step, compare one or two parameter tensors across each stage group once to confirm the replicas stayed aligned
@@ -267,7 +267,7 @@ The script should expose enough configuration to set:
 - number of training steps
 - profiler on/off
 - output directory
-- optional shard split point if implemented as a configurable choice
+- optional pipeline-stage boundary if implemented as a configurable choice
 
 ---
 
@@ -287,8 +287,8 @@ The README should contain:
 - exact profiler run command
 - a short explanation of the loss calculation
 - a short explanation of the loss gradient approximation
-- a short explanation of the shard split and communication-group structure
-- a short explanation of the bottleneck categories
+- a short explanation of the pipeline-stage partition, stage boundary, and communication-group structure
+- a short explanation of the bottleneck categories, including the pipeline bubble
 - optional controller run command if implemented
 
 2. Output artifacts, for example:
@@ -328,11 +328,11 @@ Show:
 ### 3. Trace walkthrough
 
 - open at least one profiler trace
-- identify the local compute, stage transfer, synchronization, `gather_embeddings`, `loss_calculation`, and any waiting-heavy evidence
+- identify the local compute, boundary activation and gradient transfers, synchronization, `gather_embeddings`, `loss_calculation`, and waiting-heavy evidence; distinguish the pipeline bubble from other waiting
 
 ### 4. Diagnosis
 
-- explain the observed bottleneck using the Unit 2 / Unit 3 vocabulary
+- explain the observed bottleneck using the Unit 2 / Unit 3 vocabulary and standard pipeline-parallel terminology
 
 ### 5. Manual tuning decision
 
@@ -361,15 +361,26 @@ Extend the mainline runtime so the even ranks overlap forward-side and backward-
 - keep a small per-step state table so the even rank can save stage-0 boundary activations and any needed metadata until the matching gradient returns
 - use explicit step ids in the handoff protocol so the returned boundary gradient for step `t` is matched with the saved forward state for step `t`
 
-### Stretch B - load-balancing controller
+### Stretch B - four virtual stages on two ranks
+
+Extend each two-rank pipeline-parallel replica into an **interleaved pipeline** inspired by the Llama 3.1 schedule, with four ordered virtual stages mapped onto two physical ranks.
+
+- describe the configuration as pipeline-parallel degree `p=2` with `v=2` virtual stages per rank
+- split the encoder into virtual stages `v0`, `v1`, `v2`, and `v3`
+- map `v0` and `v2` to the even rank, and `v1` and `v3` to the odd rank, so each rank owns two non-contiguous layer ranges
+- split the pair-local batch into multiple fixed-shape pipeline microbatches and use explicit microbatch ids when transferring activations and gradients
+- schedule the forward path as `v0 -> v1 -> v2 -> v3` and the backward path in reverse, including the additional cross-rank transfers introduced by the looping pipeline
+- split local batches to microbatches and implement an interleaved computation schedule
+
+### Stretch C - load-balancing controller
 
 Write an optional module that wraps the mainline training script and:
 
-- runs the distributed training job with a chosen batch size and shard boundary layer
+- runs the distributed training job with a chosen batch size and pipeline-stage boundary
 - analyzes the exported traces and summary metrics automatically
 - compares the run length of the stage-0 compute region on even ranks against the stage-1-plus-loss region on odd ranks
-- estimates what fraction of each step is spent in activation transfer, `gather_embeddings`, other communication, and waiting
+- estimates what fraction of each step is spent in boundary activation transfer, `gather_embeddings`, other communication, waiting, and the pipeline bubble
 - optimizes primarily for `images/s`
-- uses communication-heavy percentage and stage imbalance as secondary heuristics when choosing a new batch size and/or shard boundary
-- prefers shard boundaries that leave the odd ranks somewhat lighter, because the odd ranks also own the contrastive-loss path
+- uses communication-heavy percentage and stage imbalance as secondary heuristics when choosing a new batch size and/or pipeline-stage boundary
+- prefers stage boundaries that leave the odd ranks somewhat lighter, because the odd ranks also own the contrastive-loss path
 - reruns the job and repeats the analysis
