@@ -162,6 +162,8 @@ def prepare_local_batch(
             scatter_list = list(global_indices.chunk(world_size))
         else:
             scatter_list = None
+    # Recording the trace adds work and can slow training down, so these timings
+    # may be slower than a normal run.
     #NEW in Unit 3:
     with record_function("scatter_batch_indices"):
         dist.scatter(local_indices, scatter_list=scatter_list, src=0)

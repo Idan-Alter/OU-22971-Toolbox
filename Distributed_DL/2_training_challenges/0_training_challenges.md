@@ -202,6 +202,14 @@ Questions to ask:
 
 ---
 
+## Measurement caveat
+
+Treat these numbers as rough guides. The first few steps can be slower because
+the program is still getting started, so their average can make training look
+slower than it will be during a longer run. The memory estimate also leaves out
+some temporary data created during training, so the program can run out of memory
+even when the estimate suggests everything should fit.
+
 ## Takeaway
 
 More devices do not automatically mean faster training.

@@ -254,6 +254,8 @@ def train_step(
     sleep_before_sync: float,
 ) -> tuple[float, float]:
     """Run batch prep, local compute, synchronization, and return timing stats."""
+    # Teaching measurement: wall-clock step timing and shape-based activation
+    # estimates are not steady-state GPU throughput or measured peak memory.
     step_start = time.perf_counter()
 
     images, targets = prepare_local_batch(

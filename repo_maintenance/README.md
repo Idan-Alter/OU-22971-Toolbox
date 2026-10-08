@@ -12,6 +12,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\repo_maintenance\test_repo
 
 The harness writes a timestamped session under `test_logs/<session>/`.
 
+Before setup or services, it requires the January, April, and August 2020 green-taxi
+parquets under `MLOps/6_monitoring_data_drift/TLC_data/`; see the
+[taxi EDA setup](../MLOps/6_monitoring_data_drift/0_green_taxi_eda.ipynb).
+Port 5000 must be free. The harness refuses to reuse an existing MLflow server and
+only stops the process tree it launched. A remaining listener is a cleanup failure.
+Notebook smoke tests execute cells with plain Python and skip shell/magic lines
+by default; a pass does not validate a Colab or multi-GPU launch.
+
 - Start with `test_logs/<session>/summary.md`.
 - Use `test_logs/<session>/summary.json` for machine-readable results.
 - Per-task stdout/stderr and invocation records are under `test_logs/<session>/dump/` and `test_logs/<session>/sandboxes/`.
@@ -96,6 +104,7 @@ The script enumerates ignored paths with Git, refuses to delete anything outside
 - `colab_output`
 - `test_logs`
 - `exam_prep`
+- `Distributed_DL/5_scaling_strategies` (ignored live lecture material)
 
 ## `22971_grading_env/`
 

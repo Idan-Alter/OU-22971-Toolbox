@@ -1,11 +1,12 @@
 <#
 .SYNOPSIS
-Deletes ignored artifact, data, and tracking paths from this repository while preserving TLC_data, runpod_output, colab_output, test_logs, and exam_prep.
+Deletes ignored artifact, data, and tracking paths from this repository while preserving TLC_data, runpod_output, colab_output, test_logs, and exam_prep, plus live material under Distributed_DL/5_scaling_strategies.
 
 .DESCRIPTION
 Uses Git to enumerate ignored paths, removes them from the working tree, and refuses to
 delete anything outside the repository root. Any path containing TLC_data, runpod_output,
-colab_output, test_logs, or exam_prep is skipped on purpose.
+colab_output, test_logs, or exam_prep is skipped on purpose. The repo-relative
+Distributed_DL/5_scaling_strategies directory and descendants are also preserved.
 
 .EXAMPLE
 powershell -NoProfile -ExecutionPolicy Bypass -File .\repo_maintenance\clean_ignored.ps1 -WhatIf
@@ -13,7 +14,7 @@ Preview which ignored paths would be deleted without removing anything.
 
 .EXAMPLE
 powershell -NoProfile -ExecutionPolicy Bypass -File .\repo_maintenance\clean_ignored.ps1
-Delete ignored paths in the repository while preserving TLC_data, runpod_output, colab_output, test_logs, and exam_prep.
+Delete ignored paths in the repository while preserving TLC_data, runpod_output, colab_output, test_logs, and exam_prep, plus live material under Distributed_DL/5_scaling_strategies.
 
 .NOTES
 You can also run: Get-Help .\repo_maintenance\clean_ignored.ps1 -Full
@@ -68,6 +69,7 @@ if ($ignoredPaths.Count -eq 0) {
 }
 
 $skipPattern = '(^|[\\/])(TLC_data|runpod_output|colab_output|test_logs|exam_prep)([\\/]|$)'
+$liveMaterialPattern = '^Distributed_DL[\\/]5_scaling_strategies([\\/]|$)'
 $uniquePaths = $ignoredPaths | Select-Object -Unique
 $sortedPaths = $uniquePaths | Sort-Object { ($_ -split '[\\/]').Count } -Descending
 
@@ -75,7 +77,7 @@ $deletedCount = 0
 $skippedCount = 0
 
 foreach ($relativePath in $sortedPaths) {
-    if ($relativePath -match $skipPattern) {
+    if ($relativePath -match $skipPattern -or $relativePath -match $liveMaterialPattern) {
         Write-Host "Skipping preserved path: $relativePath"
         $skippedCount += 1
         continue
@@ -108,4 +110,4 @@ foreach ($relativePath in $sortedPaths) {
     }
 }
 
-Write-Host "Done. Deleted $deletedCount ignored paths; skipped $skippedCount preserved TLC_data/runpod_output/colab_output/test_logs/exam_prep paths."
+Write-Host "Done. Deleted $deletedCount ignored paths; skipped $skippedCount preserved TLC_data/runpod_output/colab_output/test_logs/exam_prep and Distributed_DL/5_scaling_strategies paths."

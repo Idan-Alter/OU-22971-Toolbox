@@ -32,7 +32,7 @@ Ray is excellent for orchestration and general distributed Python workloads, but
 
 ![Ray pain point: object store hop](images/object_store.png)
 
-This is unsuitable for DL training because nodes must exchange tensors quickly.
+This is unsuitable for DL training because nodes must communicate quickly.
 
 `torch.distributed` exists for that job:
 
@@ -59,7 +59,7 @@ Later GPU sections reuse the same mental model with faster GPU-oriented communic
 - **node**: one machine participating in the job
 - **process**: one Python worker started by the operating system
 - **rank**: the global ID of one process in the job
-- **local rank**: the process ID relative to one node
+- **local rank**: the worker index on its node
 - **world_size**: the total number of processes in the job
 - **world group**: the default process group containing every rank
 

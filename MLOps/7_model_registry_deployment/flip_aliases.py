@@ -8,7 +8,8 @@ What this script does:
 - Moves `previous_production` to the current production version (rollback anchor).
 - Promotes `candidate` by re-pointing `production` to the candidate version.
 
-This is the entire "deployment switch" in MLflow: alias reassignment.
+Alias reassignment changes registry selection. A running serving process must
+reload or restart before its predictions switch to the selected model version.
 
 Example:
   python flip_aliases.py --tracking-uri http://localhost:5000 --model-name toy_registry_demo_model

@@ -28,7 +28,7 @@ The emphasis is practical engineering ability, with supporting theoretical under
 - remote functions and distributed state
 - Ray architecture (scheduler, distributed object store, failure handling)
 - efficient compute patterns (including MapReduce) and anti-patterns
-- distributed model training
+- distributed hyperparameter search (independent model-training trials)
 - Ray Data for parallel and sharded data processing
 
 ### Part 3: [Distributed deep learning with PyTorch Distributed](Distributed_DL/README.md)

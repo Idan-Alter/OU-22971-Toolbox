@@ -7901,9 +7901,11 @@ Source: <a href="https://scikit-learn.org/stable/modules/cross_validation.html">
 <ul>
 <li>We will store the full NumPy arrays once in the object store.</li>
 <li>Each split/fold carries only integer row indices.</li>
-<li>All workers on a node will gather train/validation rows from a single shared memory location.</li>
+<li>Workers on a node may read the stored NumPy arrays through shared memory (zero-copy).</li>
+<li>Integer-indexed fold selection allocates new arrays; XGBoost also constructs
+its own training buffers. The full training pipeline is not copy-free.</li>
 </ul>
-<p>This only works with NumPy ndarrays.</p>
+<p>The object-store zero-copy read applies to compatible NumPy arrays.</p>
 </div>
 </div>
 </div>

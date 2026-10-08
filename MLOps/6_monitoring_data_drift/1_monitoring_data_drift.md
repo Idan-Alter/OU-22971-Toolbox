@@ -33,7 +33,6 @@ A common ML failure mode:
    - The new data differs from the old data used to train the model because of seasonal and geographical changes, shifts in customer tastes, and similar effects.
    - The model **performance is significantly worse** than on the test set.
 
-This is the crux of concept \ data \ distribution drift.
 
 ---
 

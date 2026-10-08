@@ -384,7 +384,7 @@ A40_X_2/gpu_resnet18_batch64_workers1_stdout.log:  resnet18, batch_size=64, num_
 A100_X_2/gpu_resnet18_batch64_workers1_stdout.log: resnet18, batch_size=64, num_workers=1, 490.1 images/s
 ```
 
-The A100 instance run reports `2.6x` the throughput, but both baseline traces are strongly input-bound: `next_batch` occupies `77-94%` of `train_step` on the A40 ranks and `86-88%` on the A100 ranks. This ratio therefore reflects the full instances and input pipelines, not just GPU speed. Under the assumed prices, the observed A100 run has worse throughput per dollar.
+The A100 instance run reports `2.6x` the throughput, but both baseline traces are strongly input-bound: `next_batch` occupies `77-94%` of `train_step` on the A40 ranks and `86-88%` on the A100 ranks. This ratio therefore reflects the full instances and input pipelines, not just GPU speed. Under the assumed prices, the observed A100 run has worse throughput per dollar. Treat this as preliminary: starting and stopping the profiler adds time to the measurement, especially when measuring only two steps. 
 
 For the tuned worker run:
 
@@ -393,9 +393,9 @@ A40_X_2/gpu_resnet18_batch64_workers4_stdout.log:  resnet18, batch_size=64, num_
 A100_X_2/gpu_resnet18_batch64_workers4_stdout.log: resnet18, batch_size=64, num_workers=4, 899.6 images/s
 ```
 
-The A100 instance run reports `1.7x` the throughput here. At `3x` the assumed cost, the observed A40 run has better throughput per dollar for this workload.
+The A100 instance run reports `1.7x` the instrumented throughput here. Repeat unprofiled benchmarks with matched workloads before comparing cost.
 
-So the answer for these recorded instance runs is: the A100 configuration has higher throughput, but not enough to justify a `3x` price if the goal is images/sec per dollar.
+Assuming these short profiled runs reflect normal training speed, the results suggest that the A100 configuration is faster, but not enough to offset a 3x price when comparing images per second per dollar.
 
 ---
 

@@ -1,6 +1,6 @@
 # Ray
 
-This folder contains Part 2 of Course 22971: a hands-on Ray sequence covering core execution primitives, local and Docker-backed clusters, system-design patterns, Ray Data, and a final capstone project.
+This folder contains Part 2 of Course 22971: a hands-on Ray sequence covering core execution primitives, local and Docker-backed clusters, system-design patterns, distributed hyperparameter search through independent training trials, Ray Data, and a final capstone project.
 
 ## Start here
 
@@ -13,10 +13,10 @@ This folder contains Part 2 of Course 22971: a hands-on Ray sequence covering co
 ## Setup
 
 This part keeps its own Conda spec in [environment.yml](environment.yml).
-Create it:
+From the repository root, create it:
 
 ```powershell
-conda env create -f environment.yml
+conda env create -f Ray/environment.yml
 ```
 
 Most local notebooks and `ray` CLI commands assume the `22971-ray` environment:

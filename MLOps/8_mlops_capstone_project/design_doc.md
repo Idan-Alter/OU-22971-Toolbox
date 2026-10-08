@@ -13,7 +13,6 @@ You are expected to learn on your own how to use:
 
 - **Metaflow**: A basic workflow orchestrator.
 - **NannyML**: A library for model monitoring and drift detection.
-- **Giskard** (optional): A library for pre-deployment model testing.
 
 > **Windows note:** If Metaflow causes Windows compatibility issues, use one of the Linux-backed setup options in [metaflow_windows_options.md](./metaflow_windows_options.md).
 
@@ -113,9 +112,11 @@ Evaluate champion on the **engineered** batch features:
 - optionally additional diagnostics (residual distribution, slice performance, SHAP)
 
 Compute:
-- `rmse_champion`
-- `rmse_baseline` (defined next)
-- `rmse_increase_pct`
+- `rmse_champion` - the champion's RMSE on the current evaluation batch.
+- `rmse_baseline` - the champion's recorded held-out reference RMSE.
+- `rmse_increase_pct` - the increase in rmse relative to the baseline.
+
+
 
 Decide whether to retrain (explore the NannyML docs for decision rules):
 - `retrain_needed=true/false`
@@ -130,6 +131,7 @@ Log:
 ### Step F - retrain (conditional)
 If retrain is needed:
 - build a training set using engineered features from an updated time window (rolling or expanding)
+- exclude the evaluation batch from candidate training.
 - train a candidate model (model + hyperparameter choices are up to you)
 - evaluate the candidate on the SAME engineered evaluation batch.
 - log candidate metrics and artifacts to MLflow
@@ -222,16 +224,7 @@ Hints:
 - Write a tiny polling script that watches a folder for new files and invokes the flow; schedule it with `cron`.
 - For real systems, explore event-driven triggering in the Metaflow docs (production backends only).
 
-### Stretch B - Giskard model scanning
-Optional extra gate:
-- after evaluation, run a vulnerability scan (slice failures, robustness issues, etc.)
-- treat scan results as an additional "do not promote" condition
-- log the HTML report to MLflow
-
-Hint:
-- Explore Giskard docs for details
-
-### Stretch C - web deployment
+### Stretch B - web deployment
 Deploy a containerized model to a cloud service.
 
 ---
@@ -255,12 +248,18 @@ Deploy a containerized model to a cloud service.
      - show a run where the workflow **decides and executes** retraining without manual intervention once started
      - show the newly registered model version in MLflow Model Registry
      - show the `@champion` alias (or equivalent) being updated as a result of the run
-   - **Inference demo (offline, Unit 6):**
-     - run batch inference on a new data slice and log predictions as an MLflow artifact (e.g., `predictions.parquet`)
+   - **Local serving demo (Unit 7):**
+     - serve the champion alias
+     - promote and deploy a candidate
+     - send an inference request to the server.
+
 
 ### Required demo pattern
 
 The video **must include three separate runs** of the workflow:
+
+Bootstrap (no champion yet) must be performed separately; it does not count as
+the ordinary no-action monitoring run below.
 
 1. **Baseline run (no action taken)**  
    - The workflow completes normally.  
@@ -320,7 +319,12 @@ Once your script becomes a **workflow** (gates, branching, optional retrain/prom
 - Only instance variables on `self` are persisted as artifacts; normal local variables are not.
 
 ### Branching
-- Conditional branching using `self.next(step_a if condition else step_b)`.
+- Persist the boolean decision, then use a conditional transition:
+
+  ```python
+  self.integrity_ok = ok
+  self.next({True: self.load_champion, False: self.end}, condition="integrity_ok")
+  ```
 
 
 ### Execution & iteration
@@ -342,6 +346,7 @@ Metaflow can do a lot more, but you are not expected to know it deeply. Specific
 ## Metaflow starter
 Save this code block in `flow_starter.py` and use it as the basis for your flow.
 
+
 ```python
 
 from metaflow import FlowSpec, Parameter, step
@@ -354,22 +359,30 @@ class MLFlowCapstoneFlow(FlowSpec):
 
     @step
     def start(self):
-        init_mlflow(self.model_name)
+        # TODO: Configure MLflow
         self.next(self.load_data)
 
     @step
     def load_data(self):
+        # TODO: Implement load_reference/load_batch with the chosen data contract.
         self.ref, self.batch = load_reference(self.reference_path), load_batch(self.batch_path)
         self.next(self.integrity_gate)
 
     @step
     def integrity_gate(self):
+        # TODO: Implement the hard/NannyML gates and resume MLflow logging by run ID.
         ok, report = run_integrity_checks(self.ref, self.batch)  # hard + NannyML
-        self.next(self.load_champion if ok else self.end)
+        self.integrity_ok = ok
+        self.next({True: self.load_champion, False: self.end}, condition="integrity_ok")
 
     @step
     def load_champion(self):
         # TODO: Add relevant steps and flow logic.
+        self.next(self.end)
+
+    @step
+    def end(self):
+        # TODO: Log final decisions
         pass
 
 

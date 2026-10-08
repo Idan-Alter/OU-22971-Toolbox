@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import time
 from pathlib import Path
@@ -36,6 +37,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--dataset-size", type=int, default=4096)
     parser.add_argument("--steps", type=int, default=5)
+    parser.add_argument("--mode", choices=("profile", "benchmark"), default="profile",
+                        help="Capture the last two steps, or time unprofiled steps after five warmups.")
     parser.add_argument("--trace-dir", type=str, default="4_ddp_on_cloud_gpus/traces")
     parser.add_argument("--trace-name", type=str)
     parser.add_argument(
@@ -102,12 +105,57 @@ def run_step(
     return float(loss.item()), int(images.size(0))
 
 
+def validate_loader(loader, *, world_size: int, batch_size: int, required_iterations: int) -> None:
+    if len(loader) < required_iterations:
+        minimum = world_size * batch_size * required_iterations
+        raise ValueError(
+            f"Insufficient loader: world_size={world_size}, local_batch_size={batch_size}, "
+            f"requested_iterations={required_iterations}, batches_per_rank={len(loader)}. "
+            f"Set --dataset-size to at least {minimum}."
+        )
+
+
+def run_benchmark(args, ddp_model, optimizer, data_iter, device, rank, world_size):
+    for _ in range(5):
+        run_step(ddp_model, optimizer, data_iter, device)
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
+    dist.barrier()
+    started = time.perf_counter()
+    images = 0
+    for _ in range(args.steps):
+        final_loss, batch_size = run_step(ddp_model, optimizer, data_iter, device)
+        images += batch_size
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
+    elapsed = time.perf_counter() - started
+    # Global throughput uses the slowest rank; gathering is outside timing.
+    rows = gather_summaries_on_rank_zero(
+        {"rank": rank, "images": images, "seconds": elapsed, "loss": final_loss}, rank, world_size
+    )
+    if rank == 0:
+        summary = {
+            "mode": "benchmark", "warmup_steps": 5, "measured_steps": args.steps,
+            "world_size": world_size, "local_batch_size": args.batch_size,
+            "total_images": sum(row["images"] for row in rows),
+            "max_rank_seconds": max(row["seconds"] for row in rows), "ranks": rows,
+        }
+        summary["global_images_per_second"] = summary["total_images"] / summary["max_rank_seconds"]
+        output_dir = Path(args.trace_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        text = json.dumps(summary, indent=2)
+        (output_dir / f"{args.trace_name}_benchmark.json").write_text(text, encoding="utf-8")
+        print(text, flush=True)
+
+
 def main() -> None:
     args = parse_args()
     if args.steps < 1:
         raise SystemExit("--steps must be at least 1.")
     if args.num_workers < 0:
         raise SystemExit("--num-workers must be at least 0.")
+    if args.batch_size < 1 or args.dataset_size < 1:
+        raise SystemExit("--batch-size and --dataset-size must be positive.")
 
     required_vars = ("RANK", "LOCAL_RANK", "WORLD_SIZE")
     missing = [name for name in required_vars if name not in os.environ]
@@ -175,6 +223,9 @@ def main() -> None:
             drop_last=True,
         )
         # This script does not loop over epochs, so we set one fixed epoch here as a reminder:
+        required_iterations = args.steps + (5 if args.mode == "benchmark" else 0)
+        validate_loader(loader, world_size=world_size, batch_size=args.batch_size,
+                        required_iterations=required_iterations)
         # real multi-epoch training must call set_epoch(...) at each epoch boundary or
         # DistributedSampler would reuse the same shuffle order every epoch.
         sampler.set_epoch(0)
@@ -196,6 +247,9 @@ def main() -> None:
         optimizer = torch.optim.SGD(ddp_model.parameters(), lr=0.1, momentum=0.9)
 
         data_iter = iter(loader)
+        if args.mode == "benchmark":
+            run_benchmark(args, ddp_model, optimizer, data_iter, device, rank, world_size)
+            return
         warmup_steps = max(args.steps - 2, 0)
         profiled_steps = min(args.steps, 2)
         final_loss = 0.0
@@ -329,7 +383,7 @@ def main() -> None:
                     f"profiled_window_seconds={max_profiled_seconds:.4f}",
                     f"estimated_global_images_per_second={global_images_per_second}",
                     (
-                        "compare this number across the tuning ladder together with the GPU trace"
+                        "instrumented throughput only; use --mode benchmark for performance/cost comparisons"
                         if device.type == "cuda"
                         else "use this CPU-mode throughput only as a local validation check"
                     ),

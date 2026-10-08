@@ -2,14 +2,15 @@
 
 ## Tracking server vs model registry
 
-In the **tracking server**, experiments and runs are the center of gravity; logged models are run artifacts.
+In MLflow, runs hold params, metrics, lineage and artifacts. A LoggedModel is a separate tracked object with its own model ID and provenance linking it to a run.
 
 The **model registry** flips the hierarchy: **models are first-class objects** and runs matter mainly for provenance.
 
 Core objects:
 
-- **Logged model** (tracking): a model artifact produced by a run, addressable as:
-  - `runs:/<run_id>/<artifact_path>` (e.g. `runs:/abc123/model`)
+- **LoggedModel** (tracking): returned by `log_model`; load `model_info.model_uri`,
+  normally `models:/<model_id>` in MLflow. Legacy run artifacts may still use
+  `runs:/<run_id>/<artifact_path>` for compatibility.
 
 - **Registered model** (registry): a *named container* for a family of models across runs.
   - holds **versions**, **aliases**, and **metadata**
@@ -28,7 +29,7 @@ Core objects:
 2) Register it -> creates a new **model version** (registry).
 3) Attach metadata (tags + description + eval pointers).
 4) Promote by moving an alias (`candidate -> production`).
-5) Deploy by serving `@production`.
+5) Deploy by serving `@production`; after an alias flip, explicitly reload/restart the running server.
 
 ---
 
@@ -63,7 +64,7 @@ registered_name = "green_taxi_tip_model"
 with mlflow.start_run():
     model_info = mlflow.sklearn.log_model(
         sk_model=model,
-        name="model",  # artifact path inside the run
+        name="model",  # name of the MLflow LoggedModel
         registered_model_name=registered_name,
         input_example=X_tr.head(5),
         await_registration_for=300,

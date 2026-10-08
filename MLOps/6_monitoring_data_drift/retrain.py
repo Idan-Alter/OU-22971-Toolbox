@@ -35,6 +35,7 @@ from green_taxi_drift_lib import (
     align_feature_frame,
     load_taxi_table,
     make_tip_frame,
+    tip_label_mask,
     cast_ints_to_float,
     latest_model_uri,
     load_feature_cols_from_run,
@@ -155,6 +156,11 @@ def main() -> None:
         # --- Model frames ---
         Xtr, ytr, feature_cols = make_tip_frame(df_train_raw, credit_card_only=True)
         Xev, yev, _ = make_tip_frame(df_eval_raw, credit_card_only=True)
+        for prefix, raw in [("train", df_train_raw), ("eval", df_eval_raw)]:
+            _, _, coverage = tip_label_mask(raw)
+            mlflow.log_metrics({f"{prefix}_{k}": v for k, v in coverage.items()})
+            if coverage["label_valid_rows"] == 0:
+                raise ValueError(f"Retraining requires labeled credit-card rows in the {prefix} dataset.")
 
         # Optional but recommended: avoid MLflow/SHAP dtype issues with pandas nullable Int64
         Xtr = cast_ints_to_float(Xtr).astype("float64")
@@ -202,6 +208,7 @@ def main() -> None:
         mlflow.log_metrics({
             "baseline_rmse": float(base_rmse),
             "new_rmse": float(new_rmse),
+            "root_mean_squared_error": float(new_rmse),
             "delta_rmse_new_minus_base": float(new_rmse - base_rmse),
         })
 

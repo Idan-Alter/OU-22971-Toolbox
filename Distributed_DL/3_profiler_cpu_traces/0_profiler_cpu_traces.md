@@ -41,7 +41,7 @@ The main output of the profiler is a trace file. We'll go over one now.
 
    This file uses the same training logic as the in the previous unit, but logs the run with the profiler.
 
-2. Open `/traces/baseline_rank0.json` at [https://ui.perfetto.dev/](https://ui.perfetto.dev/).
+2. Open `3_profiler_cpu_traces/traces/baseline_rank0.json` at [https://ui.perfetto.dev/](https://ui.perfetto.dev/).
 
    This is the log of two training steps on rank 0.
 
@@ -68,7 +68,7 @@ The main output of the profiler is a trace file. We'll go over one now.
    - can you identify the synchronization region?
    - is one phase much longer than the rest?
 
-5. Open `/traces/baseline_rank1.json` at [https://ui.perfetto.dev/](https://ui.perfetto.dev/).
+5. Open `3_profiler_cpu_traces/traces/baseline_rank1.json` at [https://ui.perfetto.dev/](https://ui.perfetto.dev/).
 
    This is rank 1's log for the same training step.
 
@@ -79,6 +79,10 @@ The main output of the profiler is a trace file. We'll go over one now.
 Connection back to Unit 2:
 This is the healthy reference step you established in Unit 2.
 Every later trace should be compared against it.
+
+The trace helps you see where the program spends time working or waiting.
+But recording the trace adds extra work and can slow the program down, so its
+timings can make training look slower than it is when the profiler is turned off.
 
 ## `profile_manual_data_parallel.py` walkthrough
 
@@ -121,7 +125,7 @@ What changed from `2_training_challenges/manual_data_parallel_demo.py`?
 
    `--profile-memory` flips the relevant flag in the profiler definition and makes it log memory events.
 
-2. Open `/traces/baseline_memory_rank0.json` in Perfetto and look for `[memory]` events mixed in with the operator timeline.
+2. Open `3_profiler_cpu_traces/traces/baseline_memory_rank0.json` in Perfetto and look for `[memory]` events mixed in with the operator timeline.
 
    Each `[memory]` event records one allocation or deallocation. The most useful fields are:
 

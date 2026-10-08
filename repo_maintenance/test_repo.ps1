@@ -296,6 +296,9 @@ function New-InvocationWrapper {
     $null = $lines.Add('}')
     $null = $lines.Add('$code = 0')
     $null = $lines.Add('try {')
+    # Windows PowerShell treats redirected native stderr as ErrorRecords. Normal
+    # MLflow startup logs must not terminate the service; use its exit code.
+    $null = $lines.Add('    $ErrorActionPreference = ''Continue''')
     $null = $lines.Add('    & $filePath @arguments 1> $stdoutPath 2> $stderrPath')
     $null = $lines.Add('    if ($null -ne $LASTEXITCODE) {')
     $null = $lines.Add('        $code = [int]$LASTEXITCODE')
@@ -436,6 +439,9 @@ function Start-LoggedBackgroundProcess {
 
     $stdoutPath = Join-Path $DumpRoot "$Id.stdout.txt"
     $stderrPath = Join-Path $DumpRoot "$Id.stderr.txt"
+    if ($WaitForPort -gt 0 -and @(Get-TcpListeningProcessIds -Port $WaitForPort).Count -gt 0) {
+        throw "Port $WaitForPort is occupied. Stop your existing service or choose another port before running the harness. It will not be reused or terminated."
+    }
     $wrapper = New-InvocationWrapper `
         -Id $Id `
         -WorkingDirectory $WorkingDirectory `
@@ -451,7 +457,7 @@ function Start-LoggedBackgroundProcess {
                 -FilePath $PowerShellExe `
                 -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $wrapper.wrapper_path) `
                 -WorkingDirectory $WorkingDirectory `
-                -NoNewWindow `
+                -WindowStyle Hidden `
                 -PassThru)
         stdout_path = $stdoutPath
         stderr_path = $stderrPath
@@ -468,11 +474,16 @@ function Wait-TcpPort {
         [string]$HostName = '127.0.0.1',
         [Parameter(Mandatory = $true)]
         [int]$Port,
-        [int]$TimeoutSec = 90
+        [int]$TimeoutSec = 90,
+        [System.Diagnostics.Process]$OwnedProcess = $null
     )
 
     $deadline = (Get-Date).AddSeconds($TimeoutSec)
     while ((Get-Date) -lt $deadline) {
+        if ($null -ne $OwnedProcess) {
+            $OwnedProcess.Refresh()
+            if ($OwnedProcess.HasExited) { return $false }
+        }
         $client = $null
         try {
             $client = New-Object System.Net.Sockets.TcpClient
@@ -480,6 +491,15 @@ function Wait-TcpPort {
             if ($asyncResult.AsyncWaitHandle.WaitOne(1000, $false)) {
                 $client.EndConnect($asyncResult) | Out-Null
                 $client.Close()
+                if ($null -ne $OwnedProcess) {
+                    $OwnedProcess.Refresh()
+                    if ($OwnedProcess.HasExited) { return $false }
+                    $ownedIds = @($OwnedProcess.Id) + @(Get-ProcessDescendantIds -RootProcessId $OwnedProcess.Id)
+                    $listeners = @(Get-TcpListeningProcessIds -Port $Port)
+                    if ($listeners.Count -eq 0 -or @($listeners | Where-Object { $_ -notin $ownedIds }).Count -gt 0) {
+                        return $false
+                    }
+                }
                 return $true
             }
         }
@@ -545,11 +565,12 @@ function Get-ProcessDescendantIds {
 
     $childLookup = @{}
     foreach ($process in (Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)) {
-        if (-not $childLookup.ContainsKey($process.ParentProcessId)) {
-            $childLookup[$process.ParentProcessId] = New-Object System.Collections.Generic.List[int]
+        $parentId = [int]$process.ParentProcessId
+        if (-not $childLookup.ContainsKey($parentId)) {
+            $childLookup[$parentId] = New-Object System.Collections.Generic.List[int]
         }
 
-        $childLookup[$process.ParentProcessId].Add([int]$process.ProcessId)
+        $childLookup[$parentId].Add([int]$process.ProcessId)
     }
 
     $descendants = New-Object System.Collections.Generic.List[int]
@@ -628,7 +649,7 @@ function Stop-BackgroundProcess {
         $null = $noteParts.Add($Note)
     }
     try {
-        if ($null -ne $Service.process) {
+        if ($null -ne $Service.process -and -not $Service.process.HasExited) {
             Stop-ProcessTree -RootProcessId $Service.process.Id
         }
 
@@ -637,18 +658,7 @@ function Stop-BackgroundProcess {
             if ($null -ne $waitForPort) {
                 $portClosed = Wait-TcpPortClosed -Port ([int]$waitForPort) -TimeoutSec 30
                 if (-not $portClosed) {
-                    foreach ($listenerPid in (Get-TcpListeningProcessIds -Port ([int]$waitForPort))) {
-                        try {
-                            Stop-ProcessTree -RootProcessId ([int]$listenerPid)
-                        }
-                        catch {
-                        }
-                    }
-
-                    $portClosed = Wait-TcpPortClosed -Port ([int]$waitForPort) -TimeoutSec 15
-                    if (-not $portClosed) {
-                        throw "Port $waitForPort is still listening after service shutdown."
-                    }
+                    throw "Port $waitForPort is still listening after owned-process shutdown; the remaining listener was not terminated."
                 }
             }
         }
@@ -1227,6 +1237,16 @@ $rayClusterStarted = $false
 $distributedDlContainerStarted = $false
 
 try {
+    $requiredTaxiPaths = @('2020-01', '2020-04', '2020-08') | ForEach-Object {
+        "MLOps/6_monitoring_data_drift/TLC_data/green_tripdata_$_.parquet"
+    }
+    $missingTaxiPaths = @($requiredTaxiPaths | Where-Object { -not (Test-Path -LiteralPath (Join-Path $RepoRoot $_)) })
+    if ($missingTaxiPaths.Count -gt 0) {
+        throw ("Missing taxi inputs:`n" + ($missingTaxiPaths -join "`n") + "`nSee the setup in MLOps/6_monitoring_data_drift/0_green_taxi_eda.ipynb.")
+    }
+    if (@(Get-TcpListeningProcessIds -Port 5000).Count -gt 0) {
+        throw 'Port 5000 is occupied. Stop your existing MLflow service before running the harness; it will not be reused or terminated.'
+    }
     if (-not $SkipEnvSetup) {
         Ensure-CondaEnvironment -Key 'MLOps' | Out-Null
         Ensure-CondaEnvironment -Key 'Ray' | Out-Null
@@ -1294,7 +1314,7 @@ try {
         -EnvironmentOverrides $script:MlflowHarnessEnv `
         -WaitForPort 5000
 
-    $mlflowReady = Wait-TcpPort -Port 5000 -TimeoutSec 120
+    $mlflowReady = Wait-TcpPort -Port 5000 -TimeoutSec 120 -OwnedProcess $mlflowService.process
     Add-Result ([pscustomobject]@{
             id = 'mlflow-server'
             category = 'service'

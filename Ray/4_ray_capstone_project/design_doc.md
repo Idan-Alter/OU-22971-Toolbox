@@ -132,7 +132,8 @@ Each `ZoneActor` owns the mutable state for that zone. Keep that state focused o
 
 The actor may also keep a prepared replay partition or replay cursor if that is convenient for the implementation, but that is an implementation detail rather than the main teaching point.
 
-Only `ZoneActor` is allowed to mutate durable zone state for that zone.
+Only `ZoneActor` is allowed to mutate the relevant zone state.
+
 In blocking mode, the controller decides which accepted writes to send into each actor.
 In async mode, the actor itself owns any reported decision for the active tick and decides whether an incoming report is on time, duplicate, or too late to accept.
 
@@ -229,7 +230,7 @@ The blocking baseline should show strong sensitivity to the slowest zones. The a
 ### Step C - initialize the runtime
 
 - create one `ZoneActor` per active zone
-- give each actor ownership of its own prepared replay partition
+- make each zone's prepared replay data available to the runtime
 - initialize any global run configuration and output locations
 
 ### Step D - advance one replay tick
@@ -271,13 +272,6 @@ Examples:
 - finalize after `completion_fraction` of zones finish
 - finalize when `tick_timeout_s` expires
 - apply the default fallback policy `always_previous` to late zones
-
-Policy requirements:
-
-- must be explicit in config
-- `fallback_policy` should default to `always_previous`
-- must be visible in logs and artifacts
-- must behave the same way on repeated runs with the same inputs and seed
 
 ### Step G - close the tick in each actor
 
@@ -322,11 +316,10 @@ For async mode, also log:
 
 ---
 
-## Failure model and invariants
+## Failure model
 
 Assume the runtime may experience retries, duplicate delivery, and late arrivals of completed zone work.
-
-Required invariants:
+Requirements:
 
 - every durable actor write must be idempotent
 - writes should be keyed by a stable identifier such as `(zone_id, tick_id)`
@@ -359,12 +352,6 @@ Suggested runtime config fields:
 - `slow_zone_sleep_s`
 - `fallback_policy`
 - `seed`
-
-Default behavior:
-
-- `fallback_policy` should default to `always_previous`
-- students should choose, implement, and document a consistent first-use edge-case policy for zones that do not yet have a previous accepted decision
-
 
 ---
 
@@ -402,6 +389,8 @@ The README should contain:
 - **Analysis and discussion** of the output artifacts
 
 ---
+
+Stress mode must run both blocking and async with the same harsher skew settings.
 
 ## Required demo pattern
 

@@ -7873,8 +7873,19 @@ a.anchor-link {
         <span class="sa">f</span><span class="s2">"--trace-name </span><span class="si">{</span><span class="n">trace_name2</span><span class="si">}</span><span class="s2"> "</span>
         <span class="s2">"--num-workers 1 "</span>
     <span class="p">)</span>
+
+    <span class="n">trace_name3</span> <span class="o">=</span> <span class="s2">"colab_gpu_resnet18_batch64_workers2"</span>
+    <span class="n">launch_cmd3</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"torchrun --standalone --nproc_per_node=1 "</span>
+        <span class="s2">"profile_ddp_gpu.py "</span>
+        <span class="sa">f</span><span class="s2">"--trace-dir </span><span class="si">{</span><span class="n">trace_dir</span><span class="si">}</span><span class="s2"> "</span>
+        <span class="sa">f</span><span class="s2">"--trace-name </span><span class="si">{</span><span class="n">trace_name3</span><span class="si">}</span><span class="s2"> "</span>
+        <span class="s2">"--num-workers 2 "</span>
+    <span class="p">)</span>
+    
     <span class="n">run</span><span class="p">(</span><span class="n">launch_cmd1</span><span class="p">)</span>
     <span class="n">run</span><span class="p">(</span><span class="n">launch_cmd2</span><span class="p">)</span>
+    <span class="n">run</span><span class="p">(</span><span class="n">launch_cmd3</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"Trace and log files are in the cwd"</span><span class="p">)</span>
 </pre></div>
 </div>

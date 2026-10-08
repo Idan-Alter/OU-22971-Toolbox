@@ -8970,6 +8970,8 @@ C:\Users\alter\AppData\Local\Temp\ipykernel_234716\3217896405.py:8: UserWarning:
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># --- Tip Amount EDA ---</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">"tip_amount"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"tip_amount"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"tip_amount"</span><span class="p">]),</span> <span class="s2">"tip_amount"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 
 <span class="c1"># 0) Tip sanity: overall distribution</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"tip_amount"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
@@ -8989,8 +8991,8 @@ C:\Users\alter\AppData\Local\Temp\ipykernel_234716\3217896405.py:8: UserWarning:
     <span class="s2">"n"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">size</span><span class="p">(),</span>
     <span class="s2">"mean_tip"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
     <span class="s2">"median_tip"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">median</span><span class="p">(),</span>
-    <span class="s2">"pct_zero_tip"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
-    <span class="s2">"pct_positive_tip"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+    <span class="s2">"pct_zero_tip"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+    <span class="s2">"pct_positive_tip"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
     <span class="s2">"pct_missing_tip"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
 <span class="p">})</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
 
@@ -8999,14 +9001,14 @@ C:\Users\alter\AppData\Local\Temp\ipykernel_234716\3217896405.py:8: UserWarning:
 <span class="c1"># Visual: fraction of positive tips by payment type</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">tip_by_pay</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="n">tip_by_pay</span><span class="p">[</span><span class="s2">"pct_positive_tip"</span><span class="p">])</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"P(tip_amount &gt; 0) by payment_type"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"P(tip_amount &gt; 0 | observed tip) by payment_type"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"payment_type"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"fraction"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
 <span class="c1"># Visual: tip distribution for each payment type (clipped)</span>
-<span class="n">pay_types</span> <span class="o">=</span> <span class="n">tip_by_pay</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">pay_types</span> <span class="o">=</span> <span class="n">tip_by_pay</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">tip_by_pay</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 <span class="n">clip_hi</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"tip_amount"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="mf">0.995</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">2.2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">pay_types</span><span class="p">)),</span> <span class="mi">4</span><span class="p">))</span>
@@ -9755,7 +9757,7 @@ Name: count, dtype: int64</pre>
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="5)-Geography-by-zone">5) Geography by zone<a class="anchor-link" href="#5)-Geography-by-zone">¶</a></h2><p>The notebook now looks for zone metadata under <code>TLC_data/</code>.</p>
 <ul>
-<li>The bundled geojson is enough for choropleths.</li>
+<li>The optional GeoJSON download described above enables choropleths.</li>
 <li><code>taxi_zone_lookup.csv</code> is optional; if it is missing we derive a simple lookup table from the geojson properties.</li>
 <li>If <code>geopandas</code> is not installed, the choropleth cell will print install guidance instead of crashing.</li>
 </ul>
@@ -9880,7 +9882,9 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="6)-Basic-tip-regression-(credit-card-only)">6) Basic tip regression (credit card only)<a class="anchor-link" href="#6)-Basic-tip-regression-(credit-card-only)">¶</a></h2><p>Target: <code>tip_amount</code>. Filter: <code>payment_type == 1</code>.</p>
+<h2 id="6)-Basic-tip-regression-(credit-card-only)">6) Basic tip regression (credit card only)<a class="anchor-link" href="#6)-Basic-tip-regression-(credit-card-only)">¶</a></h2><p>Prediction moment: end of trip, before the tip is known. Target: <code>tip_amount</code>.
+Use credit-card rows with finite, known tips; retain numeric zeros. The first
+all-numeric fit intentionally leaks <code>total_amount</code>, then removes it.</p>
 </div>
 </div>
 </div>
@@ -9900,6 +9904,11 @@ Name: count, dtype: int64</pre>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">r2_score</span><span class="p">,</span> <span class="n">mean_squared_error</span>
 
 <span class="n">dfm</span> <span class="o">=</span> <span class="n">df_cc</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">target</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">dfm</span><span class="p">[</span><span class="s2">"tip_amount"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">na_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+<span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+<span class="n">dfm</span> <span class="o">=</span> <span class="n">dfm</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">valid</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">dfm</span><span class="p">[</span><span class="s2">"tip_amount"</span><span class="p">]</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span>
+
 
 
 <span class="c1"># all numeric features except target</span>

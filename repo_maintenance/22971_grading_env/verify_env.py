@@ -51,7 +51,7 @@ def main() -> None:
     y = np.array([0.0, 1.0, 2.0])
     LinearRegression().fit(x[["x"]], y).predict(x[["x"]])
 
-    ray.init(local_mode=True, ignore_reinit_error=True, include_dashboard=False, logging_level="ERROR")
+    ray.init(num_cpus=2, ignore_reinit_error=True, include_dashboard=False, logging_level="ERROR")
     try:
         assert ray.data.from_pandas(x).count() == len(x)
     finally:

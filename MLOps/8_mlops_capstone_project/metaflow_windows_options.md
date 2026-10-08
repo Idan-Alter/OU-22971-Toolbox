@@ -30,6 +30,7 @@ Codespaces gives you a Linux VM in the browser with Conda already available.
 4. Open the `Codespaces` tab.
 5. Click `Create codespace`.
 
+
 ### Pros and tradeoffs
 
 Pros:
@@ -104,6 +105,7 @@ Use the `environment.yml` template in the appendix below. Remove optional packag
 3. Choose `Dev Containers: Reopen in Container`.
 4. Wait for the container to build and install dependencies.
 
+
 ### Pros and tradeoffs
 
 Pros:
@@ -137,7 +139,7 @@ BATCH_PATH = "data/batch.parquet"
 # Install the project-specific packages from the Conda environment template.
 # Colab does not use the dev container, so install into the active runtime.
 !python -m pip install --upgrade pip
-!pip install mlflow==3.8 "optuna==4.6.*" metaflow nannyml giskard fastapi uvicorn
+!pip install mlflow==3.8 "optuna==4.6.*" "metaflow==2.19.*" nannyml 
 
 # Optional: run your repo's data download script if you use one.
 # !python scripts/download_data.py
@@ -187,7 +189,6 @@ dependencies:
   - pip:
       - mlflow==3.8
       - optuna==4.6.*
-      - metaflow
+      - metaflow==2.19.*
       - nannyml
-      - giskard
 ```

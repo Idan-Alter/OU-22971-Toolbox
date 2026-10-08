@@ -26,6 +26,7 @@ from mlflow.data.sources import LocalArtifactDatasetSource
 from green_taxi_drift_lib import (
     load_taxi_table,
     make_tip_frame,
+    tip_label_mask,
     run_integrity_checks,
     cast_ints_to_float,
     resolve_input_path,
@@ -105,6 +106,10 @@ def main() -> None:
 
         # --- Build modeling frame ---
         X, y, feature_cols = make_tip_frame(df_raw, credit_card_only=True)
+        _, _, coverage = tip_label_mask(df_raw)
+        mlflow.log_metrics({f"train_{k}": v for k, v in coverage.items()})
+        if len(y) < 2 or not 0 < args.val_size < 1:
+            raise ValueError("Initial training needs at least two labeled credit-card rows and 0 < val_size < 1.")
         mlflow.log_dict({"feature_cols": feature_cols}, "feature_cols.json")
 
         X = cast_ints_to_float(X)
@@ -113,6 +118,8 @@ def main() -> None:
         X_tr, X_va, y_tr, y_va = train_test_split(
             X, y, test_size=args.val_size, random_state=args.seed
         )
+        if len(y_tr) == 0 or len(y_va) == 0:
+            raise ValueError("Initial training needs non-empty labeled training and validation partitions.")
 
         # --- Fit ---
         model = build_model(

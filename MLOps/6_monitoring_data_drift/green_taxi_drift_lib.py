@@ -134,24 +134,40 @@ def add_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def tip_label_mask(df_raw: pd.DataFrame, *, credit_card_only: bool = True):
+    """Positional supervised mask and coverage; raw data is never modified."""
+    if "tip_amount" not in df_raw.columns:
+        raise ValueError("Expected column 'tip_amount'.")
+    eligible = np.ones(len(df_raw), dtype=bool)
+    if credit_card_only and "payment_type" in df_raw.columns:
+        eligible = df_raw["payment_type"].eq(1).fillna(False).to_numpy(dtype=bool)
+    target = pd.to_numeric(df_raw["tip_amount"], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
+    valid = eligible & np.isfinite(target)
+    counts = {
+        "label_eligible_rows": int(eligible.sum()),
+        "label_valid_rows": int(valid.sum()),
+        "label_excluded_rows": int(eligible.sum() - valid.sum()),
+    }
+    return valid, target, counts
+
+
+def rmse_comparison(current_rmse, source_metrics):
+    """Compare with this model's reference RMSE; legacy retraining used new_rmse."""
+    baseline = source_metrics.get("root_mean_squared_error", source_metrics.get("new_rmse"))
+    if baseline is None or not np.isfinite(baseline) or baseline <= 0:
+        return baseline, None, "unavailable_missing_zero_or_nonfinite_baseline"
+    if current_rmse is None or not np.isfinite(current_rmse):
+        return baseline, None, "unavailable_current_rmse"
+    return float(baseline), float(100 * (current_rmse - baseline) / baseline), "available"
+
+
 def make_tip_frame(
     df_raw: pd.DataFrame, *, credit_card_only: bool = True
 ) -> Tuple[pd.DataFrame, np.ndarray, List[str]]:
     """Return (X, y, feature_cols) for a simple tip regression task using numeric-only features."""
-    df = add_datetime_features(df_raw)
-
-    if credit_card_only and "payment_type" in df.columns:
-        df = df[df["payment_type"] == 1].copy()
-
-    if "tip_amount" not in df.columns:
-        raise ValueError("Expected column 'tip_amount'.")
-
-    # Robust target extraction: do NOT depend on tip_amount being numeric dtype already.
-    y = (
-        pd.to_numeric(df["tip_amount"], errors="coerce")
-        .fillna(0.0)
-        .to_numpy(dtype=float)
-    )
+    mask, target, _ = tip_label_mask(df_raw, credit_card_only=credit_card_only)
+    df = add_datetime_features(df_raw).iloc[np.flatnonzero(mask)].copy()
+    y = target[mask]
 
     # Numeric-only features; drop obvious post-hoc leakage totals.
     num = df.select_dtypes(include=["number"]).copy()

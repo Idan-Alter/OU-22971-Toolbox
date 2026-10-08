@@ -25,6 +25,8 @@ from green_taxi_drift_lib import (
     align_feature_frame,
     load_taxi_table,
     make_tip_frame,
+    tip_label_mask,
+    rmse_comparison,
     run_integrity_checks,
     compute_drift_report,
     log_violin_plots_ref_vs_cur,
@@ -146,8 +148,11 @@ def main() -> None:
             "RatecodeID", "PULocationID", "DOLocationID", "tip_amount", "total_amount",
         ] if c in df_ref_raw.columns and c in df_cur_raw.columns]
 
+        categorical_cols = [c for c in ["payment_type", "RatecodeID", "PULocationID", "DOLocationID"] if c in raw_cols]
+        numeric_cols = [c for c in raw_cols if c not in categorical_cols]
         drift_raw, drift_raw_metrics = compute_drift_report(
-            df_ref_raw[raw_cols], df_cur_raw[raw_cols], bins=args.drift_bins
+            df_ref_raw[raw_cols], df_cur_raw[raw_cols], bins=args.drift_bins,
+            numeric_cols=numeric_cols, categorical_cols=categorical_cols,
         )
         mlflow.log_metrics({f"drift_raw_{k}": v for k, v in drift_raw_metrics.items()})
         mlflow.log_table(drift_raw, artifact_file="drift/raw.json")
@@ -156,6 +161,19 @@ def main() -> None:
         log_violin_plots_ref_vs_cur(df_ref_raw,df_cur_raw)
         # Model feature space
         Xcur, ycur, feature_cols = make_tip_frame(df_cur_raw, credit_card_only=True)
+        _, _, coverage = tip_label_mask(df_cur_raw)
+        mlflow.log_metrics(coverage)
+        if len(ycur) == 0:
+            mlflow.set_tag("performance_status", "unavailable_no_valid_labels")
+            mlflow.log_dict({
+                "model_uri": model_uri, "cur_rmse": None,
+                "baseline_run": model_source_run_id, **coverage,
+                "performance_status": "unavailable_no_valid_labels",
+                "relative_degradation_status": "unavailable_current_rmse",
+                "rmse_increase_pct_vs_baseline": None,
+            }, "monitor_summary.json")
+            return
+        mlflow.set_tag("performance_status", "available")
         Xcur = cast_ints_to_float(Xcur)
 
         #Consider logging drift in feature space.
@@ -186,11 +204,11 @@ def main() -> None:
 
         # Also log a quick "degradation" number if we can find baseline RMSE from source run
         cur_rmse = res.metrics.get("root_mean_squared_error")
-        if model_source_run_id and cur_rmse is not None:
-            base = client.get_run(model_source_run_id)
-            base_rmse = base.data.metrics.get("root_mean_squared_error")
-            if base_rmse is not None and base_rmse > 0:
-                mlflow.log_metric("rmse_increase_pct_vs_baseline", float((cur_rmse - base_rmse) / base_rmse))
+        source_metrics = client.get_run(model_source_run_id).data.metrics if model_source_run_id else {}
+        base_rmse, increase_pct, comparison_status = rmse_comparison(cur_rmse, source_metrics)
+        mlflow.set_tag("rmse_increase_unit", "percent")
+        if increase_pct is not None:
+            mlflow.log_metric("rmse_increase_pct_vs_baseline", increase_pct)
 
         # Record decision hint for retrain script
         mlflow.log_dict(
@@ -198,6 +216,12 @@ def main() -> None:
                 "model_uri": model_uri,
                 "cur_rmse": cur_rmse,
                 "baseline_run": model_source_run_id,
+                **coverage,
+                "performance_status": "available",
+                "baseline_rmse": base_rmse if comparison_status == "available" else None,
+                "rmse_increase_pct_vs_baseline": increase_pct,
+                "rmse_increase_unit": "percent",
+                "relative_degradation_status": comparison_status,
             },
             artifact_file="monitor_summary.json",
         )
