@@ -81,6 +81,38 @@ Subtree preview example:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\repo_maintenance\render_notebooks_html.ps1 -NotebookRoot Ray -WhatIf
 ```
 
+## `export_course_docx.py`
+
+Export the course into one Word document with a title page, clickable table of
+contents, formatted Markdown, code blocks, saved notebook outputs, and embedded
+figures. Parts follow the root README's teaching order, followed by naturally
+numbered units and files; notebook cells retain their original order. Maintenance
+tools, repository metadata, and profiler JSON traces are excluded. Companion
+notebook HTML is represented through the notebook rather than duplicated.
+
+Requires Python 3.10+, Pandoc, and the following Python packages. Populated table
+of contents page numbers additionally require LibreOffice and PyMuPDF:
+
+```powershell
+python -m pip install python-docx Pillow lxml PyMuPDF
+python repo_maintenance/export_course_docx.py . --output exam_prep/course_22971.docx --paginate
+```
+
+Install Pandoc and LibreOffice separately. LibreOffice's `soffice` executable must
+be on `PATH`, or set `SOFFICE` to its full path. Omit `--paginate` to export without
+calculating page numbers; Word can update the table of contents afterward.
+
+The exporter uses saved notebook results without executing course code and writes
+a companion `.audit.json` recording included files, exclusions, and render order.
+Use `--embed-sources` to retain exact original files in an extractable archive
+inside the DOCX:
+
+```powershell
+python repo_maintenance/export_course_docx.py --extract-sources exam_prep/course_22971.docx --destination exam_prep/extracted_sources
+```
+
+Extraction requires a document generated with `--embed-sources`.
+
 ## `clean_ignored.ps1`
 
 Use `clean_ignored.ps1` to remove ignored generated artifacts without running the full smoke test.
